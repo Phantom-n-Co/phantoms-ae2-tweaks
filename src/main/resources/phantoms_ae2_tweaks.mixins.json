@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.wp.phantoms_ae2_tweaks.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CraftOneToInventoryMixin",
+    "CraftingTermSlotInvoker"
+  ],
+  "client": [
+    "AbstractRecipeHandlerMixin",
+    "CraftingTermMenuMixin",
+    "EmiEncodePatternHandlerMixin",
+    "EmiReloadMixin",
+    "EmiStackConvertersMixin",
+    "EncodePatternTransferHandlerMixin",
+    "RepoMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

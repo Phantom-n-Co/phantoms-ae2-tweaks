@@ -1,0 +1,142 @@
+plugins {
+    id 'idea'
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.147'
+    id 'me.modmuss50.mod-publish-plugin' version '2.2.1'
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/releases/'
+        content {
+            includeGroup 'dev.emi'
+        }
+    }
+}
+
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {
+            client()
+            gameDirectory.set(project.getLayout().getProjectDirectory().dir('runs/client'))
+        }
+        clientAlt {
+            client()
+            gameDirectory.set(project.getLayout().getProjectDirectory().dir('runs/client-alt'))
+            programArguments.addAll '--username', 'White_Phant0m', '--uuid', 'f83bd929-fbf0-4186-becb-658d676fcc42'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    // AE2 publishes to Maven Central under org.appliedenergistics
+    implementation "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+    // The full EMI artifact is needed, not just :api, because the cache reuses EmiFavorite and EmiStackList
+    implementation "dev.emi:emi-neoforge:${emi_version}+${minecraft_version}"
+    localRuntime "org.appliedenergistics:guideme:${guideme_version}"
+}
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            ae2_version_range      : ae2_version_range,
+            emi_version_range      : emi_version_range,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+tasks.register('sourceJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
+    from 'LICENSE'
+}
+
+def releaseType = 'stable'
+if (mod_version.toLowerCase().contains('alpha')) {
+    releaseType = 'alpha'
+} else if (mod_version.toLowerCase().contains('beta')) {
+    releaseType = 'beta'
+}
+
+publishMods {
+    file = tasks.named('jar').flatMap { it.archiveFile }
+    version = project.version
+    changelog = providers.environmentVariable('CHANGELOG').orElse("See ${mod_github}/releases")
+    type = me.modmuss50.mpp.ReleaseType.of(releaseType)
+    displayName = "${mod_name} ${project.version}"
+    modLoaders.add('neoforge')
+    dryRun = providers.gradleProperty('publishDryRun').isPresent()
+
+    // A platform is only registered when its project id is filled in, so an unused one is not published to at all
+    if (curseforge_project?.trim()) {
+        curseforge {
+            projectId = curseforge_project
+            accessToken = providers.environmentVariable('CURSEFORGE_API_KEY')
+            javaVersions.add(JavaVersion.VERSION_21)
+            client = true
+            server = true
+            minecraftVersions.add(minecraft_version)
+            requires('applied-energistics-2')
+            requires('emi')
+        }
+    }
+
+    if (modrinth_project?.trim()) {
+        modrinth {
+            projectId = modrinth_project
+            accessToken = providers.environmentVariable('MODRINTH_API_KEY')
+            minecraftVersions.add(minecraft_version)
+            requires('ae2')
+            requires('emi')
+        }
+    }
+}

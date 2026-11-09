@@ -1,0 +1,42 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+description='''${mod_description}'''
+logoFile = "assets/${mod_id}/logo.png"
+
+[[mixins]]
+config="phantoms_ae2_tweaks.mixins.json"
+
+[[dependencies.phantoms_ae2_tweaks]]
+    modId="neoforge"
+    type="REQUIRED"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.phantoms_ae2_tweaks]]
+    modId="minecraft"
+    type="REQUIRED"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.phantoms_ae2_tweaks]]
+    modId="ae2"
+    type="REQUIRED"
+    versionRange="${ae2_version_range}"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.phantoms_ae2_tweaks]]
+    modId="emi"
+    type="REQUIRED"
+    versionRange="${emi_version_range}"
+    ordering="AFTER"
+    side="CLIENT"
